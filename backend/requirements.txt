@@ -8,4 +8,6 @@ python-multipart
 python-dotenv
 supabase
 email-validator
+fastapi-mail
+
 
