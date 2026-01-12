@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Admin Console</div>
+            <nav style="display: flex; align-items: center; gap: 16px;">
+                <span id="user-name" style="color: rgb(var(--text-muted));"></span>
+                <button onclick="logout()" class="btn btn-glass"
+                    style="padding: 8px 16px; font-size: 0.9rem;">Logout</button>
+            </nav>
+        </header>
+
+        <div class="dashboard-grid">
+            <aside class="sidebar glass-panel" style="padding: 20px;">
+                <ul>
+                    <li><a href="#" class="active" onclick="switchTab('uploads')">Client Uploads</a></li>
+                    <li><a href="#" onclick="switchTab('reports')">Send Report</a></li>
+                </ul>
+            </aside>
+
+            <main class="content-area glass-panel">
+                <!-- Client Uploads Section -->
+                <div id="tab-uploads">
+                    <h2>Recent Client Uploads</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Client ID</th>
+                                <th>Filename</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="uploads-table-body">
+                            <!-- Items here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Send Report Section -->
+                <div id="tab-reports" style="display: none;">
+                    <h2>Upload Business Report</h2>
+                    <div style="margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <form id="report-form" style="max-width: 100%;">
+                            <label style="display:block; margin-bottom:8px;">Select Client:</label>
+                            <select id="client-select" required style="width: 100%; margin-bottom: 12px;">
+                                <option value="">Loading clients...</option>
+                            </select>
+
+                            <input type="text" id="report-title" placeholder="Report Title" required>
+
+                            <label style="display:block; margin-bottom:8px; margin-top: 12px;">Report File
+                                (PDF):</label>
+                            <input type="file" id="report-file" required>
+
+                            <button type="submit" class="btn btn-primary" style="width: auto; margin-top: 16px;">Upload
+                                & Notify Client</button>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        checkAuthGuard('admin');
+        const user = getUser();
+        document.getElementById('user-name').textContent = user.full_name;
+
+        function switchTab(tab) {
+            document.getElementById('tab-uploads').style.display = tab === 'uploads' ? 'block' : 'none';
+            document.getElementById('tab-reports').style.display = tab === 'reports' ? 'block' : 'none';
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        async function loadUploads() {
+            try {
+                const uploads = await fetchAPI('/uploads');
+                const tbody = document.getElementById('uploads-table-body');
+                tbody.innerHTML = uploads.map(u => `
+                    <tr>
+                        <td>${u.client_id}</td>
+                        <td>${u.filename}</td>
+                        <td>${u.description || '-'}</td>
+                        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                        <td><a href="${u.file_url}" target="_blank" class="btn btn-glass" style="padding: 4px 12px; font-size: 0.8rem;">Download</a></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadClients() {
+            try {
+                // We need an endpoint to list clients. Assuming /users/ returns all for admin.
+                const users = await fetchAPI('/users/');
+                const clientSelect = document.getElementById('client-select');
+                // Filter only clients if role available, or show all
+                const clients = users.filter(u => u.role === 'client');
+
+                clientSelect.innerHTML = clients.map(c => `
+                    <option value="${c.id}">${c.full_name} (${c.email})</option>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        document.getElementById('report-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const client_id = document.getElementById('client-select').value;
+            const title = document.getElementById('report-title').value;
+            const fileInput = document.getElementById('report-file');
+
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                await fetchAPI(`/reports/?title=${encodeURIComponent(title)}&client_id=${client_id}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                alert('Report uploaded and client notified!');
+                document.getElementById('report-form').reset();
+            } catch (err) {
+                alert('Upload failed: ' + err.message);
+            }
+        });
+
+        // Init
+        loadUploads();
+        loadClients();
+    </script>
+</body>
+
+</html>

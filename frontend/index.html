@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Insights Portal</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">InsightData</div>
+            <nav>
+                <div id="auth-links">
+                    <a href="login.html" class="btn btn-glass">Login</a>
+                </div>
+            </nav>
+        </header>
+
+        <section class="hero fade-in">
+            <h1>Transform Your Data<br>Into Actionable Growth</h1>
+            <p>Our expert analysts provide manual, in-depth reports tailored to your business needs using advanced ERP methodologies.</p>
+            <a href="#contact" class="btn btn-primary">Get Started</a>
+        </section>
+
+        <section class="services fade-in">
+            <div class="glass-panel service-card">
+                <div class="service-icon">📊</div>
+                <h3>Deep Analysis</h3>
+                <p>We go beyond the numbers to find the 'why' behind the trends.</p>
+            </div>
+            <div class="glass-panel service-card">
+                <div class="service-icon">⚡</div>
+                <h3>Fast Turnaround</h3>
+                <p>Get comprehensive reports delivered to your dashboard within 24 hours.</p>
+            </div>
+            <div class="glass-panel service-card">
+                <div class="service-icon">🔒</div>
+                <h3>Secure & Confidential</h3>
+                <p>Your data is encrypted and handled with the highest security standards.</p>
+            </div>
+        </section>
+
+        <section id="contact" class="glass-panel fade-in" style="padding: 40px; text-align: center; max-width: 600px; margin: 0 auto 80px;">
+            <h2 style="margin-bottom: 20px;">Ready to unlock potential?</h2>
+            <form id="contact-form">
+                <input type="text" id="name" placeholder="Your Name" required>
+                <input type="email" id="email" placeholder="Your Work Email" required>
+                <textarea id="message" rows="4" placeholder="How can we help?" required></textarea>
+                <button type="submit" class="btn btn-primary">Send Inquiry</button>
+            </form>
+        </section>
+
+        <footer>
+            <p style="text-align: center; color: var(--text-muted); opacity: 0.5;">&copy; 2026 Customer Insights Portal. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            
+            try {
+                await fetchAPI('/contact', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, email, message })
+                });
+                alert('Thank you! We will reach out shortly.');
+                e.target.reset();
+            } catch (err) {
+                alert('Error submitting form: ' + err.message);
+            }
+        });
+
+        // Check if logged in update Nav
+        if (localStorage.getItem('token')) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const dashLink = user.role === 'admin' ? 'admin_dashboard.html' : 'client_dashboard.html';
+            document.getElementById('auth-links').innerHTML = `<a href="${dashLink}" class="btn btn-primary">Dashboard</a>`;
+        }
+    </script>
+</body>
+</html>

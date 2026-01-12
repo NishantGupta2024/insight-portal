@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Customer Insights Portal</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="glass-panel auth-box fade-in">
+            <h2 id="form-title" style="text-align: center; margin-bottom: 24px;">Login</h2>
+
+            <form id="auth-form">
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <!-- For Register -->
+                <input type="text" id="fullname" placeholder="Full Name" style="display: none;">
+                <select id="role" style="display: none;">
+                    <option value="client">Client</option>
+                    <option value="admin">Admin (Requires Secret)</option>
+                </select>
+                <!-- Admin secret only shown if admin selected -->
+
+                <button type="submit" class="btn btn-primary" id="submit-btn">Login</button>
+            </form>
+
+            <p style="text-align: center; margin-top: 16px; font-size: 0.9rem;">
+                <span id="toggle-text">Don't have an account?</span>
+                <a href="#" id="toggle-link" style="color: hsl(var(--secondary));">Register</a>
+            </p>
+            <p style="text-align: center; margin-top: 10px;">
+                <a href="index.html" style="font-size: 0.8rem; opacity: 0.7;">Back to Home</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script>
+        const form = document.getElementById('auth-form');
+        const title = document.getElementById('form-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleLink = document.getElementById('toggle-link');
+        const toggleText = document.getElementById('toggle-text');
+
+        const fullnameInput = document.getElementById('fullname');
+        const roleInput = document.getElementById('role');
+
+        let isLogin = true;
+
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            if (isLogin) {
+                title.textContent = "Login";
+                submitBtn.textContent = "Login";
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = "Register";
+                fullnameInput.style.display = "none";
+                roleInput.style.display = "none";
+                fullnameInput.required = false;
+            } else {
+                title.textContent = "Create Account";
+                submitBtn.textContent = "Register";
+                toggleText.textContent = "Already have an account?";
+                toggleLink.textContent = "Login";
+                fullnameInput.style.display = "block";
+                roleInput.style.display = "block";
+                fullnameInput.required = true;
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                if (isLogin) {
+                    // Login
+                    const formData = new FormData();
+                    formData.append('username', email);
+                    formData.append('password', password);
+
+                    const data = await fetchAPI('/auth/login', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    localStorage.setItem('token', data.access_token);
+
+                    // Get User Details
+                    const user = await fetchAPI('/users/me');
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    // Redirect
+                    if (user.role === 'admin') window.location.href = 'admin_dashboard.html';
+                    else window.location.href = 'client_dashboard.html';
+
+                } else {
+                    // Register
+                    const fullname = fullnameInput.value;
+                    const role = roleInput.value;
+
+                    await fetchAPI('/auth/register', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            email,
+                            password,
+                            full_name: fullname,
+                            role: role
+                        })
+                    });
+
+                    alert("Registration successful! Please login.");
+                    location.reload();
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
