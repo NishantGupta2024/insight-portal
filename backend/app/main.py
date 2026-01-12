@@ -9,7 +9,9 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Customer Insights Portal")
 
 origins = [
-    "*"
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "https://gleaming-fudge-1e4b0c.netlify.app"
 ]
 
 app.add_middleware(
