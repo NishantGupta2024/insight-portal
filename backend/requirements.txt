@@ -9,5 +9,7 @@ python-dotenv
 supabase
 email-validator
 fastapi-mail
+argon2-cffi
+
 
 
