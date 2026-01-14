@@ -10,7 +10,7 @@ function getUser() {
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.width = '/frontend/index.html';
+    window.location.href = '/index.html';
 }
 
 function checkAuthGuard(role = null) {
